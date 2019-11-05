@@ -1,0 +1,380 @@
+<?php
+define('MODULE_NAME', 'news_item');
+define('TAXONOMY_VOCABULARY_CATEGORIES', 'news_channel_categories');
+/**
+* Implementation of hook_menu().
+*/
+function news_item_menu() {
+  
+  $items = array();
+  $items +=_main_navigation_news_menu_items();
+  $items +=_news_category_navigation_menu_items();
+  $items +=_admin_config_menu_items();
+  return $items;
+}
+
+function _news_category_navigation_menu_items() {
+ 
+  $categoryVocabulary = taxonomy_vocabulary_machine_name_load(TAXONOMY_VOCABULARY_CATEGORIES);
+  $tree = taxonomy_get_tree($categoryVocabulary->vid);
+    foreach ($tree as $term) {
+         
+        //Parent Menu
+        if ($term->parents[0] == 0) {
+            $items["news/%a_zoo_animal/$term->name"] = array(
+                'title' => ucfirst($term->name),
+                'page callback' => 'category_menu_selected',
+                'access callback' => TRUE,
+                'page arguments' => array(1),
+                'menu_name' => 'menu-news-category',
+                'expanded' => TRUE
+            );
+            $childTerms = taxonomy_get_children($term->tid, $categoryVocabulary->vid);
+            foreach ($childTerms as $child) {
+                $items["news/%a_zoo_animal/$term->name/$child->name"] = array(
+                    'title' => ucfirst($child->name),
+                    'page callback' => 'category_menu_selected',
+                    'access callback' => TRUE,
+                    'page arguments' => array(1),
+                    'menu_name' => 'menu-news-category',
+                  );
+            }
+       
+        }
+  }
+  return $items;
+}
+/**
+ * Page callback for /hello.
+ */
+function category_menu_selected($category = '') {
+    
+    if (is_popular_query()) {
+        $category = "Popular News - " . $category;
+    }else {
+        $category = "Latest News - " . $category;
+    }
+    
+    return t('@category News', array('@category' => $category));
+}
+
+function _main_navigation_news_menu_items() {
+  
+  $items['news'] = array(
+    'title' => 'News',
+    'page callback' => 'news_menu_selected',
+    'access callback' => TRUE,
+    'menu_name' => 'main-menu',
+    'expanded' => TRUE,
+    'weight' => 11,
+  );
+  
+  $items['news/latest'] = array(
+    'title' => 'Latest News',
+    'page callback' => 'news_menu_selected',
+    'access callback' => TRUE,
+    'page arguments' => array('Latest'),
+    'menu_name' => 'main-menu',
+    'weight' => 12,
+  );
+  
+  $items['news/popular'] = array(
+    'title' => 'Popular News',
+    'page callback' => 'news_menu_selected',
+    'page arguments' => array('Popular'),
+    'access callback' => TRUE,
+    'menu_name' => 'main-menu',
+    'weight' => 13,
+  );
+  
+  
+  $items['news/world'] = array(
+    'title' => 'World Analysis',
+    'page callback' => 'news_menu_selected',
+    'access callback' => TRUE,
+    'page arguments' => array('Latest'),
+    'menu_name' => 'main-menu',
+    'weight' => 14,
+  );
+  
+  $items['news/country'] = array(
+    'title' => 'Country Report',
+    'page callback' => 'news_menu_selected',
+    'page arguments' => array('Popular'),
+    'access callback' => TRUE,
+    'menu_name' => 'main-menu',
+    'weight' => 15,
+  );
+  
+  
+  return $items;
+}
+
+
+function _admin_config_menu_items(){
+    
+    $items['admin/config/news_item'] = array(
+    'title' => 'News Feeder',
+    'description' => 'Adjust news feeder options.',
+    'position' => 'right',
+    'weight' => -5,
+    'page callback' => 'system_admin_menu_block_page',
+    'access arguments' => array('administer site configuration'),
+    'file' => 'system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+  );
+  
+  $items['admin/config/news_item/settings'] = array(
+    'title' => 'News Feeder settings',
+    'description' => 'Save settings for News Feeder',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('news_item_admin_settings'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'admin/settings.inc',
+  );
+  
+  $items['admin/config/news_item/run'] = array(
+    'title' => 'Run Import News',
+    'description' => 'Import news manually',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('news_item_run_manual'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'admin/run.inc',
+  );
+  $items['admin/config/news_item/delete'] = array(
+    'title' => 'Delete All News',
+    'description' => 'Delete all news items',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('news_item_delete_news_items'),
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'admin/delete.inc',
+  );
+  
+  return $items;
+}
+
+
+
+/**
+ * Page callback for /hello.
+ */
+function news_menu_selected($type = '') {
+    return t('@type News',
+    array('@type' => $type));
+}
+
+function a_zoo_animal_to_arg($arg) {
+    
+    $full_path = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+    $parts = parse_url($full_path);
+    $pathParts = explode("news/", $parts["path"]);
+
+    $popular_or_latest = explode("/", $pathParts[1]);    
+    // $arg is '%' since it is a wildcard
+    // Let's replace it with a zoo animal.
+    return $popular_or_latest[0];
+}
+
+/**
+* Implementation of hook_node_info().
+*/
+function news_item_node_info() {
+    
+  drupal_set_message("Hook - Node Info");
+  
+  $items[MODULE_NAME] = array(
+    'name' => t('News Item'),    // name of your content type
+    'type' => MODULE_NAME,
+    'module' => MODULE_NAME,
+    'base' => 'node_content',
+    'description' => t('Use this content type to post a news.'),
+    'has_title' => '1',
+    'title_label' => t('News Title'),
+    'body_label' => t('News Body'),
+    'help' => t('Please fill in all fields.'),
+  );
+  
+  return $items;
+}
+
+
+function news_item_node_view_alter(&$build) {
+  
+  //If node in full view mode and is a news item
+  if ($build['#view_mode'] == 'full' && array_key_exists('body', $build)) {
+      
+      // Get the node
+      $node = $build['body']['#object'];
+      
+      if ($node->type == MODULE_NAME) {
+
+        $node->news_item_view_count['und'][0]['value']  = $node->news_item_view_count['und'][0]['value'] + 1;
+        // Check if we have extracted the news from the original website
+        if ($node->news_item_extracted['und'][0]['value'] <= 0) {
+            
+            require_once ("simple-html-dom/scrapper.php");
+            
+            //This code is to get the appropriate station
+            $channelID = $node->news_item_channel['und'][0]['tid'];
+            $stationName = db_query(
+            'SELECT name 
+            FROM {field_data_news_channel_parent} 
+            JOIN taxonomy_term_data ON taxonomy_term_data.tid = field_data_news_channel_parent.news_channel_parent_tid
+            WHERE entity_id = :channelID',array(":channelID" => $channelID))->fetchField();
+            
+            //Get the news
+            $scapper = new CScrapper($node->news_item_story_url['und'][0]['value'], $stationName);
+            
+            //Only if the news is not empty we set the body else
+            //Body field is deleted somehow
+            
+            if (!empty($scapper->newsContent)) {
+                $node->body['und'][0]['value'] = $scapper->newsContent;
+                $build['body'][0]['#markup']  = $scapper->newsContent;
+            }
+            
+            //We update the news as the item has been extracted
+            $node->news_item_extracted['und'][0]['value'] = 1;
+        }
+        //We save news item in all cases, either we have
+        //1. Updated news count, or just extracted news
+        node_save($node);
+    }
+  }
+}
+
+function news_item_form($form, &$formstate){
+
+}
+
+/**
+* Implements hook_help().
+*/
+function news_item_help($path, $arg) {
+  if ($path == 'admin/help#news_item') {
+    return t('News Feeder help page.');
+  }
+}
+
+/**
+* Implements hook_block_info().
+*/
+function news_item_block_info() {
+    
+  $blocks = array();
+  $blocks['news_item_latest_news'] = array(
+    'info' => t('News Feeder - Latest News.'),
+    'cache' => DRUPAL_NO_CACHE,
+     'status' => 1,
+    'region' => 'content',
+    'visibility' => 1,
+    'pages' => 'news/latest*',
+  );
+  return $blocks;
+}
+
+/**
+* Implements hook_block_view().
+*/
+function news_item_block_view($block_name = '') {
+    
+  if ($block_name == 'news_item_latest_news') {
+    
+    $popularMenuSlected = is_popular_query();
+    
+    
+    
+    /* I was having haing alot of problems with the below query to work with the paging
+     * solution http://drupal.stackexchange.com/questions/36907/pager-query-with-join
+     * keep pager/join statements on seperate lines */
+     
+    $query = db_select('node', 'news_item')->extend('PagerDefault')->limit(5);
+    $query->join('field_data_news_item_channel','news_item_channel','news_item_channel.entity_id = news_item.nid');
+    $query->join('field_data_news_channel_category','channel_category','channel_category.entity_id = news_item_channel.news_item_channel_tid');
+    if ($popularMenuSlected) {
+        $query->join('field_data_news_item_view_count','news_item_count','news_item_count.entity_id = news_item.nid');
+    }
+    $query->join('taxonomy_term_data','taxonomy_category','taxonomy_category.tid = channel_category.news_channel_category_tid');
+    $query->fields('news_item', array('nid'));
+    $query->condition('news_item.type', 'news_item');
+    $channel_category_taxonomy_term = is_category_provided_for_news_list();
+    if (!empty($channel_category_taxonomy_term)) {
+        $query->condition('taxonomy_category.name', $channel_category_taxonomy_term, '=');
+
+    } 
+    if ($popularMenuSlected) {
+        $query->orderBy('news_item_count.news_item_view_count_value', 'DESC');//ORDER BY created 
+    } else {
+        //Latest
+        $query->orderBy('created', 'DESC');//ORDER BY created 
+    }
+    
+    $result = $query->execute();
+    
+    $nodeIds = $result->fetchAllAssoc('nid');    
+    $nodes = node_load_multiple(array_keys($nodeIds));
+    
+    //Block display
+    $block['content'] = node_view_multiple($nodes);
+    $block['content']['pager'] = array('#theme' => 'pager', '#weight' => 100);
+    return $block;
+  }
+
+}
+
+function news_item_cron() {
+  // Default to an hourly interval. Of course, cron has to be running at least
+  // hourly for this to work.
+  $interval = variable_get('news_item_cron', 60 * 60);
+  // We usually don't want to act every time cron runs (which could be every
+  // minute) so keep a time for the next run in a variable.
+  if (time() >= variable_get('news_item_cron_next_execution', 0)) {
+    require_once ( dirname(__FILE__) . '/admin/scripts/schedule.php');   
+    $schecdule = new CSchedule();
+    $schecdule->start_importing_news();
+    watchdog('news_item_cron', 'news_item_cron ran');
+    if (!empty($GLOBALS['news_item_cron_show_status_message'])) {
+      drupal_set_message(t('news_item_cron executed at %time', array('%time' => date_iso8601(time(0)))));
+    }
+    variable_set('news_item_cron_next_execution', time() + $interval);
+  }
+}
+
+function is_popular_query(){
+    $full_path = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+    if ( strpos($full_path, "news/popular") !== false) {
+            return true;
+    }
+    return false;
+}
+
+function is_category_provided_for_news_list() {
+    
+    $full_path = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+    $lastPart = explode("/", $full_path); 
+    $part = $lastPart[count($lastPart) - 1];
+    $channel_category_taxonomy_term = '';
+    if ($part == "latest" || $part == "popular") {
+        $category_selected = false;
+    }else {
+        $category_selected = true;
+        //Check for page parameter part and remove it
+        //And extract selectdd category
+        if ( strpos($part, "?") !== false) {
+            $part = explode("?", $part); 
+            $channel_category_taxonomy_term = $part[0];
+        } else {
+            //No page first visit for that category , so just extract that
+            $channel_category_taxonomy_term = $part;
+        }
+        if ($channel_category_taxonomy_term == "latest" || $channel_category_taxonomy_term == "popular") {
+            $channel_category_taxonomy_term = '';
+        }
+    }
+    
+    return $channel_category_taxonomy_term;
+}
+?>

@@ -1,0 +1,796 @@
+<?php
+/* Stations / Channels / News Items Relationship 
+ * 
+ * Ideally I would have liked to linked the above relationship in terms 
+ * of different content types linked to each other.
+ * 
+ * Drupal limitation you cannot have parent child relation ship between contents
+ * 
+ * Stations (should be Content, instead I have created it as a taxonomy term parent of stations )
+ *  Channles (should be Content, instead I have created it as a taxonomy term child of Stations taxonomy term)
+ *   NesItems
+ * 
+ * 
+ * 
+*/
+
+define('TAXONOMY_STATIONS', 'news_stations');
+define('TAXONOMY_CHANNELS', 'news_channels');
+define('TAXONOMY_CATEGORIES', 'news_channel_categories');
+define('MODULE_CONTENT_TYPE', 'news_item');
+define('MODULE', 'news_item');
+
+function news_item_install() {
+    drupal_set_message("Hook - Installing");
+    _create_taxonomy();
+    _create_content_type();
+    //_create_category_menu();
+    //_create_pages_and_their_link_aliases();
+    
+    // Get all Pages
+    $sql = "ALTER TABLE field_data_news_item_story_url MODIFY news_item_story_url_value VARCHAR(1000)";
+    $result = db_query($sql, array());
+    
+    $sql = "ALTER TABLE field_revision_news_item_story_url MODIFY news_item_story_url_value VARCHAR(1000)";
+    $result = db_query($sql, array());
+}
+
+
+function _create_taxonomy() {
+    
+  // Start Add News stations vocabulary
+  $t = get_t();
+  $voc_term_stations = new stdClass();
+  $voc_term_stations->name = $t('RSS - Stations');
+  $voc_term_stations->machine_name = TAXONOMY_STATIONS;
+  $voc_term_stations->description = $t('News stations vocabulary');
+  $voc_term_stations->heirarchy = 1;
+  $voc_term_stations->module = MODULE;
+  $voc_term_stations->weight = 1;
+  taxonomy_vocabulary_save($voc_term_stations);
+  
+  
+  $term = (object) array(
+   'name' => 'bbc',
+   'description' => 'bbc news',
+   'vid' => $voc_term_stations->vid,
+  );
+  taxonomy_term_save($term);
+  
+  $term = (object) array(
+   'name' => 'sky',
+   'description' => 'sky news',
+   'vid' => $voc_term_stations->vid,
+  ); 
+  taxonomy_term_save($term);
+  
+  $term = (object) array(
+   'name' => 'cnn',
+   'description' => 'cnn news',
+   'vid' => $voc_term_stations->vid,
+  ); 
+  taxonomy_term_save($term);
+  
+  $term = (object) array(
+   'name' => 'press tv',
+   'description' => 'press tv',
+   'vid' => $voc_term_stations->vid,
+  ); 
+  taxonomy_term_save($term);
+  
+  $term = (object) array(
+   'name' => 'nasa',
+   'description' => 'nasa news',
+   'vid' => $voc_term_stations->vid,
+  ); 
+  taxonomy_term_save($term);
+  
+  $term = (object) array(
+   'name' => 'reuters',
+   'description' => 'reuters',
+   'vid' => $voc_term_stations->vid,
+  ); 
+  taxonomy_term_save($term);
+  
+  $term = (object) array(
+   'name' => 'rt news',
+   'description' => 'rt news',
+   'vid' => $voc_term_stations->vid,
+  ); 
+  taxonomy_term_save($term);
+  
+  $term = (object) array(
+   'name' => 'new york times',
+   'description' => 'new york times',
+   'vid' => $voc_term_stations->vid,
+  ); 
+  taxonomy_term_save($term);
+  
+  $term = (object) array(
+   'name' => 'aljazeera',
+   'description' => 'aljazeera',
+   'vid' => $voc_term_stations->vid,
+  ); 
+  taxonomy_term_save($term);
+  
+  $term = (object) array(
+   'name' => 'daily mail',
+   'description' => 'daily mail',
+   'vid' => $voc_term_stations->vid,
+  ); 
+  taxonomy_term_save($term);
+  
+  $term = (object) array(
+   'name' => 'washington post',
+   'description' => 'washington post',
+   'vid' => $voc_term_stations->vid,
+  ); 
+  taxonomy_term_save($term);
+  
+  
+  // End Add News stations vocabulary
+
+  // Start Add channels vocabulary
+  $t = get_t();
+  $voc_term_channels = new stdClass();
+  $voc_term_channels->name = $t('RSS - Station Channels');
+  $voc_term_channels->machine_name = TAXONOMY_CHANNELS;
+  $voc_term_channels->description = $t('News station rss channels vocabulary');
+  $voc_term_channels->heirarchy = 1;
+  $voc_term_channels->module = MODULE;
+  $voc_term_channels->weight = 2;
+  taxonomy_vocabulary_save($voc_term_channels);
+  
+  // End Add channels vocabulary
+  
+  // Start Add channels category vocabulary
+  $t = get_t();
+  $voc_term_channels_category = new stdClass();
+  $voc_term_channels_category->name = $t('RSS - Channels Categories');
+  $voc_term_channels_category->machine_name = TAXONOMY_CATEGORIES;
+  $voc_term_channels_category->description = $t('News station rss channels category vocabulary');
+  $voc_term_channels_category->heirarchy = 1;
+  $voc_term_channels_category->module = MODULE;
+  $voc_term_channels_category->weight = 3;
+  taxonomy_vocabulary_save($voc_term_channels_category);
+  
+  
+  
+  //science & technology
+  $topTerm = (object) array(
+   'name' => 'top news',
+   'description' => 'top news',
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($topTerm);
+  
+  
+  //science & technology
+  $scienceTechnologyTerm = (object) array(
+   'name' => 'science & technology',
+   'description' => 'science & technology',
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($scienceTechnologyTerm);
+  
+  //technology
+  $term = (object) array(
+   'name' => 'technology',
+   'description' => 'technology',
+   'parent' => $scienceTechnologyTerm->tid,
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($term);
+  
+  //science
+  $term = (object) array(
+   'name' => 'science',
+   'description' => 'science',
+   'parent' => $scienceTechnologyTerm->tid,
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($term);
+  
+  //environment
+  $term = (object) array(
+   'name' => 'environment',
+   'description' => 'environment',
+   'parent' => $scienceTechnologyTerm->tid,
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($term);
+
+  
+  //space
+  $term = (object) array(
+   'name' => 'space',
+   'description' => 'space',
+   'parent' => $scienceTechnologyTerm->tid,
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($term);
+  
+  //world
+  $worldTerm = (object) array(
+   'name' => 'world',
+   'description' => 'world',
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($worldTerm);
+  
+  //world - uk
+  $term = (object) array(
+   'name' => 'uk',
+   'description' => 'uk',
+   'parent' => $worldTerm->tid,
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($term);
+  
+  //world - europe
+  $term = (object) array(
+   'name' => 'europe',
+   'description' => 'europe',
+   'parent' => $worldTerm->tid,
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($term);
+  
+  //world - africa
+  $term = (object) array(
+   'name' => 'africa',
+   'description' => 'africa',
+   'parent' => $worldTerm->tid,
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($term);
+  
+  //world - americas
+  $term = (object) array(
+   'name' => 'americas',
+   'description' => 'americas',
+   'parent' => $worldTerm->tid,
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($term);
+  
+  //world - asia
+  $term = (object) array(
+   'name' => 'asia',
+   'description' => 'asia',
+   'parent' => $worldTerm->tid,
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($term);
+  
+  //world - asia
+  $term = (object) array(
+   'name' => 'middle east',
+   'description' => 'middle east',
+   'parent' => $worldTerm->tid,
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($term);
+  
+  //world - us
+  $term = (object) array(
+   'name' => 'us',
+   'description' => 'us',
+   'parent' => $worldTerm->tid,
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($term);
+   
+  //health
+  $term = (object) array(
+   'name' => 'health',
+   'description' => 'health',
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($term);
+  
+  //business
+  $businessTerm = (object) array(
+   'name' => 'business',
+   'description' => 'business',
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($businessTerm);
+  
+  //business - market
+  $term = (object) array(
+   'name' => 'market',
+   'description' => 'market',
+   'parent' => $businessTerm->tid,
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($term);
+  
+  //business - money
+  $term = (object) array(
+   'name' => 'money',
+   'description' => 'money',
+   'parent' => $businessTerm->tid,
+   'vid' => $voc_term_channels_category->vid,
+  );
+  taxonomy_term_save($term);
+
+
+  // Start 1.Create field so it can be attached as "Parent Station" to "Channel" vocabulary term.
+  $field = array(
+        'field_name' => 'news_channel_parent',//Same-Same-Same-Same-Same-Same-Same-Same-Same
+        'type' => 'taxonomy_term_reference', 
+        'label' => $t('Label'),
+        'settings' => array(
+        'allowed_values' => array(
+            array(
+                'vocabulary' => TAXONOMY_STATIONS,//This reference the vocabulary term created for stations above not channel
+                'parent' => 0
+                )
+            )
+        )
+  );
+  field_create_field($field);
+  
+  
+  // Create channel category fields
+  $field = array(
+        'field_name' => 'news_channel_category',//Same-Same-Same-Same-Same-Same-Same-Same-Same
+        'type' => 'taxonomy_term_reference', 
+        'label' => $t('Label'),
+        'settings' => array(
+        'allowed_values' => array(
+            array(
+                'vocabulary' => TAXONOMY_CATEGORIES,//This reference the vocabulary term created for category
+                'parent' => 0
+                )
+            )
+        )
+  );
+  field_create_field($field);
+  
+  // Create a rss url field
+  $field = array(
+    'field_name' => 'news_channel_rss_url',
+    'type' => 'text',
+    'label' => $t('Rss Url')
+  );
+  field_create_field($field);
+  
+  // End 1.Create field so it can be attached as "Parent Station" to "Channel" vocabulary term.
+  
+  
+  // Start 2.Attach News stations channels vocabulary rss url field to taxonomy channels
+  $instance = array(
+    'field_name' => 'news_channel_parent',//Same-Same-Same-Same-Same-Same-Same-Same-Same
+    'entity_type' => 'taxonomy_term',
+    'bundle' => TAXONOMY_CHANNELS, //This tells attach this term "Station vocabulary options" to "Channels" vocabulary as its parent.
+    'label' => $t('Parent Station'),
+    'description' => $t('Parent station for this channel'),
+    'required' => true,
+    'widget' => array(
+         'type' => 'options_select',
+        'weight' => 3
+    )
+  );
+  field_create_instance($instance);
+  
+  $instance = array(
+    'field_name' => 'news_channel_category',//Same-Same-Same-Same-Same-Same-Same-Same-Same
+    'entity_type' => 'taxonomy_term',
+    'bundle' => TAXONOMY_CHANNELS, //This tells attach this term "Station vocabulary options" to "Channels" vocabulary as its parent.
+    'label' => $t('Rss Category'),
+    'description' => $t('Rss category for this channel'),
+    'required' => true,
+    'widget' => array(
+         'type' => 'options_select',
+        'weight' => 3
+    )
+  );
+  field_create_instance($instance);
+  
+  $instance = array(
+    'field_name' => 'news_channel_rss_url',//Same-Same-Same-Same-Same-Same-Same-Same-Same
+    'entity_type' => 'taxonomy_term',
+    'bundle' => TAXONOMY_CHANNELS, //This tells attach this term "Station vocabulary options" to "Channels" vocabulary as its parent.
+    'label' => $t('Rss Url'),
+    'description' => $t('Rss url'),
+    'required' => true,
+    'widget' => array(
+         'type' => 'text_textfield',
+    )
+  );
+  field_create_instance($instance);
+  // End 2.Attach News stations channels vocabulary rss url field to taxonomy channels
+  
+  
+  
+  
+  //Add bbc station channels
+  $vocabulary_stations_term_bbc = taxonomy_get_term_by_name('bbc', TAXONOMY_STATIONS);
+  /*
+  
+  $term = new stdClass();
+  $term->name = 'technology';
+  $term->description = 'technology';
+  $term->vid = $vocabulary_channels->vid; 
+  $term->news_channel_rss_url['und'][0]['value'] = 'http://feeds.bbci.co.uk/news/technology/rss.xml';
+  $term->news_channel_category['und'][0]['tid'] = key(axonomy_get_term_by_name('technology', TAXONOMY_CATEGORIES));
+  $term->news_channel_parent['und'][0]['tid'] = key($vocabulary_stations_term_bbc);
+  taxonomy_term_save($term);
+  
+  $term = new stdClass();
+  $term->name = 'environment';
+  $term->description = 'environment';
+  $term->vid = $vocabulary_channels->vid; 
+  $term->news_channel_rss_url['und'][0]['value'] = 'http://feeds.bbci.co.uk/news/science_and_environment/rss.xml';
+  $term->news_channel_category['und'][0]['tid'] = key(axonomy_get_term_by_name('environment', TAXONOMY_CATEGORIES));
+  $term->news_channel_parent['und'][0]['tid'] = key($vocabulary_stations_term_bbc);
+  taxonomy_term_save($term);
+  
+  
+  */
+    
+  require_once ( dirname(__FILE__) . '/data/channels.inc');
+  $vocabulary_channels = taxonomy_vocabulary_machine_name_load(TAXONOMY_CHANNELS);
+  
+  foreach ($channels as $channel) {
+      
+      drupal_set_message("Hook - " . $channel['Channel']);
+      $term = new stdClass();
+      $term->name = $channel['Station']." ".$channel['Channel'];
+      $term->description = $channel['Station']." ".$channel['Channel'];
+      $term->vid = $vocabulary_channels->vid; 
+      $term->news_channel_rss_url['und'][0]['value'] = $channel['Url'];
+      $term->news_channel_category['und'][0]['tid'] = key(taxonomy_get_term_by_name($channel['Category'], TAXONOMY_CATEGORIES));
+      $term->news_channel_parent['und'][0]['tid'] = key(taxonomy_get_term_by_name($channel['Station'], TAXONOMY_STATIONS));
+      taxonomy_term_save($term);
+  }
+  
+  
+  
+}
+
+
+function _create_content_type() {
+    // Start adding news Item content type
+    
+    node_types_rebuild();
+    $types = node_type_get_types();
+    
+    $content_type = node_type_set_defaults();
+    
+    // add the body field to the node type
+    node_add_body_field($types[MODULE_CONTENT_TYPE]);
+    
+    // Load the instance definition for our content type's body
+    $body_instance = field_info_instance('node', 'body', MODULE_CONTENT_TYPE);
+    
+    // Configure the body field
+    // Then we'll add our news_item view mode to the body instance display by instructing the body to display as a summary
+    $body_instance['type'] = 'text_summary_or_trimmed';
+    $body_instance['format'] = 'full_html';
+    $body_instance['label'] = 'News Body';
+    $body_instance['display'] = array(
+        'default' => array(
+          'label' => 'above', 
+          'type' => 'text_default',
+          'weight' => 0,
+        ),
+        'teaser' => array(
+          'label' => 'hidden',
+          'type' => 'text_summary_or_trimmed',
+          'weight' => 0,
+        ),
+    );
+    $body_instance['widget']['weight'] = 0;
+    $body_instance['widget']['settings'][ 'rows'] = 5;
+    
+    // Save our changes to the body field instance.
+    field_update_instance($body_instance);
+    
+    // Create all the fields we are adding to our content type.
+    foreach (_news_item_installed_fields() as $field) {
+        field_create_field($field);
+    }
+    
+    // Create all the instances for our fields.
+    foreach (_news_item_installed_instances() as $instance) {
+        $instance['entity_type'] = 'node';
+        $instance['bundle'] = MODULE_CONTENT_TYPE;
+        field_create_instance($instance);
+    }
+}
+
+/**
+* Return a structured array defining the fields created by this content type.
+* For the job post module there is only one additional field – the company name
+* Other fields could be added by defining them in this function as additional elements
+* in the array below
+*/
+function _news_item_installed_fields() {
+    
+    $t = get_t();
+    
+    return array(
+        // textfield
+        'news_item_story_url' => array(
+            'field_name' => 'news_item_story_url', 
+            'label' => $t('News Story URL'),
+            'type' => 'text',
+            'size' => 'normal',
+
+        ),
+        'news_item_story_image_url' => array(
+            'field_name' => 'news_item_story_image_url', 
+            'label' => $t('Thumbnail Image Url'),
+            'type'=> 'text',
+        ),
+        'news_item_hashcode' => array(
+            'field_name' => 'news_item_hashcode', 
+            'label' => $t('Hashcode'),
+            'type'=> 'text',
+        ),
+        'news_item_channel' => array(
+            'field_name' => 'news_item_channel', 
+            'label' => $t('Story RSS Channel'),
+            'type'=> 'taxonomy_term_reference',
+            'settings' => array(
+                            'allowed_values' => array(
+                            array(
+                                'vocabulary' => TAXONOMY_CHANNELS,
+                                'parent' => 0
+                            )
+                    )
+            )
+        ),
+        'news_item_view_count' => array(
+            'field_name' => 'news_item_view_count', 
+            'label' => $t('Total Views'),
+            'type'=> 'text',
+        ),
+        'news_item_extracted' => array(
+            'field_name' => 'news_item_extracted', 
+            'label' => $t('News Extracted'),
+            'module' => 'list',
+            'cardinality' => 1,
+            'type' => 'list_boolean',
+            'settings' => array(
+                         'allowed_values' => array(
+                                       0 => '0',
+                                       1 => '1',
+                                       ),
+                         'allowed_values_function' => ''
+             ),
+        ),
+         
+    );
+}
+/**
+* Return a structured array defining the field instances associated with this content type.
+*/
+function _news_item_installed_instances() {
+    
+    $t = get_t();
+    
+    return array(
+    
+        'news_item_channel' => array(
+                'field_name' => 'news_item_channel',
+                'type' => 'taxonomy_term',
+                'label'=> $t('News Channel'),
+                 'widget' => array(
+                    'type' => 'options_select',
+                    'weight' => 0,
+                 ),
+            
+        ),
+        
+        'news_item_view_count' => array(
+                'field_name' => 'news_item_view_count',
+                'type' => 'text',
+                'label'=> $t('Total Views'),
+                 'widget' => array(
+                    'type' => 'text_textfield',
+                    'weight' => 1,
+                 ),
+            
+        ),
+        'news_item_extracted' => array(
+              'field_name' => 'news_item_extracted',
+              'label' => t("News Extracted"),
+              'description' => t("News Extracted"),
+              'default_value' => array(0 => array('value' => 0)),
+              'widget' => array(
+                        'active' => 1,
+                        'module' => 'options',
+                        'settings' => array(
+                                'display_label' => 1,
+                                ),
+                        'type' => 'options_onoff',
+                        'weight' => 2,
+                        ),
+              'settings' => array()
+        ),
+        'news_item_story_url' => array(
+                'field_name' => 'news_item_story_url',
+                'type' => 'text',
+                'label'=> $t('News Story URL'),
+                'widget' => array(
+                    'type' => 'text_textfield',
+                    'weight' => 3,
+                    'settings' => array(
+                                'size' => '200',
+                                'max_length' => '1000',
+                     ),
+                 ),
+                 'display' => array(
+                    'example_node_list' => array(
+                        'label'=> $t('Url'),
+                        'type' => 'text',
+                     ),
+            ),
+        ),
+        
+        'news_item_story_image_url' => array(
+                'field_name' => 'news_item_story_image_url',
+                'type' => 'text',
+                'label'=> $t('Image Url'),
+                'widget' => array(
+                    'type' => 'text_textfield',
+                 ),
+                 'display' => array(
+                    'example_node_list' => array(
+                        'label'=> $t('Image Url'),
+                        'type' => 'text',
+                        'weight' => 4,
+                 ),
+            ),
+        ),
+    
+        'news_item_hashcode' => array(
+                'field_name' => 'news_item_hashcode',
+                'type' => 'text',
+                'label'=> $t('Unique Hashcode'),
+                'widget' => array(
+                    'type' => 'text_textfield',
+                 ),
+                 'display' => array(
+                    'example_node_list' => array(
+                        'label'=> $t('Unique Hashcode'),
+                        'type' => 'text',
+                        'weight' => 4,
+                     ),
+            ),
+        ),
+        
+    );
+}
+
+
+/**
+* Implements hook_uninstall().
+*/
+function news_item_uninstall() {
+    
+    drupal_set_message("Hook - Uninstall");
+    _uninstall_news_items_and_relevant_pages();
+    _uninstall_created_fields_by_news_item_content_type();
+    _uninstall_news_items_vocabularies();
+    
+    
+    // Delete Paths aliases
+    // Delete all menus created 
+    //menu_delete('menu-categories');
+    menu_delete_links("menu-news-categories");
+    
+    // Delete our content type
+    node_type_delete(MODULE_CONTENT_TYPE);
+
+    // Purge all field infromation
+    field_purge_batch(1000);
+}
+
+function _uninstall_news_items_vocabularies() {
+    
+    $vocab = taxonomy_vocabulary_machine_name_load(TAXONOMY_STATIONS);
+    if ($vocab)
+    taxonomy_vocabulary_delete($vocab->vid);
+    
+    $vocab = taxonomy_vocabulary_machine_name_load(TAXONOMY_CHANNELS);
+    if ($vocab)
+    taxonomy_vocabulary_delete($vocab->vid);
+    
+    $vocab = taxonomy_vocabulary_machine_name_load(TAXONOMY_CATEGORIES);
+    if ($vocab)
+    taxonomy_vocabulary_delete($vocab->vid);
+    
+}
+
+function _uninstall_news_items_and_relevant_pages() {
+    
+    // Get all news Items
+    $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+    $result = db_query($sql, array(':type' => MODULE_CONTENT_TYPE));
+    $nids = array();
+    
+    // Add News Items to nodes to be delete
+    foreach ($result as $row) {
+        $nids[] = $row->nid;
+    }
+    
+    // Get all Pages
+    $sql = "SELECT nid FROM {node} n WHERE (n.title = 'Popular News' ) OR (n.title = 'Latest News')";
+    $result = db_query($sql, array(':type' => 'page'));
+    
+    // Add News Items to nodes to be delete
+    foreach ($result as $row) {
+        $nids[] = $row->nid;
+    }
+    
+    // Delete all the nodes at once
+    if (count($nids) > 0) {
+        node_delete_multiple($nids);
+    }
+}
+
+function _uninstall_created_fields_by_news_item_content_type() {
+    
+    // Loop over each of the fields defined by this module and delete
+    // all instances of the field, their data, and the field itself.
+    foreach (array_keys(_news_item_installed_fields()) as $field) {
+        field_delete_field($field);
+    }
+    
+    // Loop over any remaining field instances attached to the news_item
+    // content type (such as the body field) and delete them individually.
+    $instances = field_info_instances('node', MODULE_CONTENT_TYPE);
+    foreach ($instances as $instance_name => $instance) {
+        field_delete_instance($instance);
+    }
+}
+
+function _create_pages_and_their_link_aliases() {
+        
+    global $user;
+    
+    $popularPage = new stdClass();
+    $popularPage->title = 'Popular News';
+    $popularPage->body = 'Popular News Blah Body';
+    
+    $popularPage->uid = $user->uid;
+    $popularPage->name = $user->name;
+    $popularPage->type = 'page';
+    $popularPage->status = 1;
+    $popularPage->promote = 0;
+    $popularPage->language = LANGUAGE_NONE;
+    node_object_prepare($popularPage);
+    node_save( $popularPage );
+    
+    // Create a path alias for the page created above.
+    $path['source'] = 'node/' . $popularPage->nid;
+    //So when this url is clicked above page is called
+    $path['alias'] = 'news/popular'; 
+    path_save($path);
+    
+    $latestPage = new stdClass();
+    $latestPage->title = 'Latest News';
+    $latestPage->body = 'latest News Blah Body';
+    
+    $latestPage->uid = $user->uid;
+    $latestPage->name = $user->name;
+    $latestPage->type = 'page';
+    $latestPage->status = 1;
+    $latestPage->promote = 0;
+    $latestPage->language = LANGUAGE_NONE;
+    node_object_prepare($latestPage);
+    node_save( $latestPage );
+    
+    // Create a path alias for the page created above.
+    $latestPagepath['source'] = 'node/' . $latestPage->nid;
+    //So when this url is clicked above page is called
+    $latestPagepath['alias'] = 'news/latest'; 
+    path_save($latestPagepath);
+    
+}
+

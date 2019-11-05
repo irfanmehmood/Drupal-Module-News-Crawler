@@ -1,0 +1,66 @@
+<?php
+
+function digitalcook_install() {
+        
+    global $user;
+    
+    // Sync menus with names and pages , aliases set below
+    // Sync menus with names and pages , aliases set below
+    // Sync menus with names and pages , aliases set below
+    // Sync menus with names and pages , aliases set below
+    $pages = array ("clients" => 'clients',
+                    "we do" => "we-do",
+                    "we do - mobile / tablet" => 'we-do/mobile-tablet-development',
+                    "we do - web and social applications" => 'we-do/web-social-development',
+                    "we do - data analysis" => 'we-do/data-analysis',
+                    "we do - technical consultation" => 'we-do/technical-consultation',
+                    "we are" => "we-are",
+                    "contact" => "connect-contact");
+    
+    foreach ($pages as $page => $alias) {
+        
+        //Clients Page
+        $pageNode = new stdClass();
+        $pageNode->title = $page;
+        $pageNode->body = $page;
+        $pageNode->uid = $user->uid;
+        $pageNode->name = $user->name;
+        $pageNode->type = 'page';
+        $pageNode->status = 1;
+        $pageNode->promote = 0;
+        $pageNode->language = LANGUAGE_NONE;
+        node_object_prepare($pageNode);
+        node_save( $pageNode );
+        $path = array();
+        $path['source'] = 'node/' . $pageNode->nid;
+        $path['alias'] = $alias; 
+        path_save($path);
+        
+    }
+    
+    
+    
+}
+
+function digitalcook_uninstall() {
+    
+    // Get all news Items
+    $sql = 'SELECT nid FROM {node} n WHERE n.type = :type';
+    $result = db_query($sql, array(':type' => 'page'));
+    $nids = array();
+    
+    // Add News Items to nodes to be delete
+    foreach ($result as $row) {
+        $nids[] = $row->nid;
+    }
+    
+    // Delete all the nodes at once
+    if (count($nids) > 0) {
+        node_delete_multiple($nids);
+    }
+    
+    // Purge all field infromation
+    field_purge_batch(1000);
+}
+
+?>

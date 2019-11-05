@@ -1,0 +1,17 @@
+; This is a News Item for News Feeder Module.
+; Developed by Irfan Mehmood
+name = News Item
+description = "Content News Item for News Feeder Module."
+package = DigitalCook
+core = 7.x
+dependencies[] = taxonomy
+dependencies[] = menu
+files[] = news_item.install
+files[] = news_item.module
+files[] = admin/delete.inc
+files[] = admin/run.inc
+files[] = admin/settings.inc
+files[] = simple-html-dom/simple_html_dom.php
+files[] = data/channels.inc
+configure = admin/config/news_item
+php = 5.2

@@ -1,0 +1,9 @@
+; This is a Site Module for DigitalCook Website.
+; Developed by Irfan Mehmood
+
+name = DigitalCook Site Build
+description = "This builds the navigation menu, and create relevant pages for digital cook site"
+package = DigitalCook
+core = 7.x
+files[] = digitalcook.module
+php = 5.2

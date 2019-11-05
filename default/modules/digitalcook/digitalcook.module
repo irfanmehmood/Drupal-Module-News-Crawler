@@ -1,0 +1,158 @@
+<?php
+/**
+* Implementation of hook_menu().
+*/
+function digitalcook_menu() {
+    
+  $items = array();  
+  $items +=_main_navigation_menu_items();
+  return $items;
+}
+
+function _main_navigation_menu_items() {
+    
+$items['clients'] = array(
+    'title' => 'Clients',
+    'page callback' => 'digitalcook_menu_selected',
+    'access callback' => TRUE,
+    'page arguments' => array('Latest'),
+    'menu_name' => 'main-menu',
+    'weight' => 1,
+  );
+  
+  
+  $items['we-do'] = array(
+    'title' => 'We Do',
+    'page callback' => 'digitalcook_menu_selected',
+    'access callback' => TRUE,
+    'menu_name' => 'main-menu',
+    'expanded' => TRUE,
+    'weight' => 2,
+  );
+  
+  $items['we-do/web-social-applications'] = array(
+    'title' => 'Web / Social Applications',
+    'page callback' => 'digitalcook_menu_selected',
+    'access callback' => TRUE,
+    'menu_name' => 'main-menu',
+    'weight' => 3,
+  );
+  
+  $items['we-do/mobile-tablet-development'] = array(
+    'title' => 'Mobile Tablet Desktop',
+    'page callback' => 'digitalcook_menu_selected',
+    'access callback' => TRUE,
+    'menu_name' => 'main-menu',
+    'weight' => 4,
+  );
+  
+  
+  $items['we-do/data-analysis'] = array(
+    'title' => 'Data Analysis',
+    'page callback' => 'digitalcook_menu_selected',
+    'access callback' => TRUE,
+    'menu_name' => 'main-menu',
+    'weight' => 5,
+  );
+  
+  $items['we-are'] = array(
+    'title' => 'We Are',
+    'page callback' => 'digitalcook_menu_selected',
+    'page arguments' => array('Popular'),
+    'access callback' => TRUE,
+    'menu_name' => 'main-menu',
+    'weight' => 6,
+  );
+  
+  $items['connect'] = array(
+    'title' => 'Connect',
+    'page callback' => 'digitalcook_menu_selected',
+    'page arguments' => array('Popular'),
+    'access callback' => TRUE,
+    'menu_name' => 'main-menu',
+    'weight' => 7,
+    'expanded' => TRUE,
+  );
+  
+  $items['connect/contact'] = array(
+    'title' => 'Contact',
+    'page callback' => 'digitalcook_menu_selected',
+    'page arguments' => array('Popular'),
+    'access callback' => TRUE,
+    'menu_name' => 'main-menu',
+    'weight' => 8,
+  );
+  
+  $items['connect/agency-partnership'] = array(
+    'title' => 'Agency Partnership',
+    'page callback' => 'digitalcook_menu_selected',
+    'access callback' => TRUE,
+    'menu_name' => 'main-menu',
+    'weight' => 9,
+  );
+  
+  return $items;
+
+}
+
+
+/**
+ * Page callback for /hello.
+ */
+function digitalcook_menu_selected($category = '') {
+    return t('@category News',
+    array('@category' => $category));
+}
+
+/**
+ * Page callback for /hello.
+ */
+function digitalcook_selected($type = '') {
+    return t('@type News',
+    array('@type' => $type));
+}
+
+function digitalcook_to_arg($arg) {
+    
+    $full_path = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+    $parts = parse_url($full_path);
+    $pathParts = explode("news/", $parts["path"]);
+
+    $popular_or_latest = explode("/", $pathParts[1]);    
+    // $arg is '%' since it is a wildcard
+    // Let's replace it with a zoo animal.
+    return $popular_or_latest[0];
+}
+
+
+
+/**
+* Implements hook_block_info().
+*/
+function digitalcook_block_info() {
+    
+  $blocks = array();
+  $blocks['digitalcook_clients'] = array(
+    'info' => t('DigitalCook - Clients.'),
+    'cache' => DRUPAL_NO_CACHE,
+     'status' => 1,
+    'region' => 'content',
+    'visibility' => 1,
+    'pages' => 'clients',
+  );
+  return $blocks;
+}
+
+/**
+* Implements hook_block_view().
+*/
+function digitalcook_block_view($block_name = '') {
+    
+  if ($block_name == 'news_item_latest_news') {
+    
+    $block['content'] = "This will be clients block";
+    $block['content']['pager'] = array('#theme' => 'pager', '#weight' => 100);
+    return $block;
+  }
+
+}
